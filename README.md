@@ -19,12 +19,11 @@ p cnf 4 3
 1 2 0
 -2 3 0
 1 -3 4 0
--2 3 0
 ```
 
 Each line in the file represents a clause, and all the lines together represents the clause set. The - in front of a variable represents a negation. 
 This file has 4 variables and 3 clauses as reflected in the header `p cnf 4 3`. The 0's at the end of each clause represents the end of the clause, and is not to be treated as a variable. 
-This formula should be interpreted as `(1 ∨ 2) ∧ (¬2 ∨ 3) ∧ (1 ∨ ¬3 ∨ 4) ∧ (¬2 ∨ 3)`. 
+This formula should be interpreted as `(1 ∨ 2) ∧ (¬2 ∨ 3) ∧ (1 ∨ ¬3 ∨ 4)`. 
 
 More examples of .cnf files can be found [here](https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html).
 
