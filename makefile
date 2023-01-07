@@ -8,6 +8,3 @@ all:
 
 debug:
 	g++ $(D_FLAGS) -o SAT-solver SAT-solver.cpp cnf_io.cpp
-
-expl:
-	g++ $(E_FLAGS) -o cnf-read-test cnf_read_test.cpp cnf_io.cpp
