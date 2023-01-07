@@ -23,6 +23,7 @@ class Sequent;
 
 void free_clause(Clause *cl);
 void free_sequent(Sequent *seq);
+void free_remaining_sequents(vector<Sequent*> *stack);
 
 void print_clause_set(Clause** clause_set, int n);
 
@@ -34,7 +35,7 @@ int apply_atomic_cut(Sequent *seq, Sequent **left, Sequent **right);
 
 Clause** build_full_clause_set(int num_vars);
 
-Clause** read_cnf_file(string &filename, int *n);
+Clause** read_cnf_file(string filename, int *n);
 
 void test(int num_variables);
 

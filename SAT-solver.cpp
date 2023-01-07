@@ -1,4 +1,4 @@
-#include "SAT-solver.h"
+#include "SAT-solver.hpp"
 #include "cnf_io.hpp"
 
 class Clause {
@@ -32,15 +32,10 @@ atom Clause::can_be_simplified_with(atom at) {
 }
 
 void Clause::print() {
-    cout << "  {";
     for (int i = 0; i < n; i++) {
-        string pre = "";
-        if (!formulae[i].not_negated) pre = "~";
-        string post = ", ";
-        if (i == n-1) post = "";
-        cout << pre << formulae[i].var_hash << post;
+        if (!formulae[i].not_negated) cout << "-";
+        cout << formulae[i].var_hash << " ";
     }
-    cout << "}";
 }
 
 class Sequent {
@@ -235,12 +230,14 @@ Clause* deep_cp_clause(Clause* cl, uint32_t ignore_var) {
     int n = cl->n;
     atom *formulae = new atom[n];
     int c_i = 0;
+
     for (int i = 0; i < n; i++) {
         if (cl->formulae[i].var_hash == ignore_var) continue; // Unit resolution
         atom at = {cl->formulae[i].var_hash, cl->formulae[i].not_negated};
         formulae[c_i] = at;
         c_i++;
     }
+
     Clause *clause = new Clause(formulae, c_i);
     return clause;
 }
@@ -266,13 +263,10 @@ void free_remaining_sequents(vector<Sequent*> *stack) {
 }
 
 void print_clause_set(Clause** clause_set, int n) {
-    cout << "{" << endl;
     for (int i = 0; i < n; i++) {
         clause_set[i]->print();
-        if (i != n-1) cout << ",";
         cout << endl;
     }
-    cout << "}" << endl;
 }
 
 /**
@@ -351,7 +345,7 @@ void prove_it(Clause** clause_set, int n) {
  * Functions for parsing of cnf files authored by John Burkardt.
  * Returns formula as a clause set.
 */
-Clause** read_cnf_file(string &filename, int *n) {
+Clause** read_cnf_file(string filename, int *n) {
     int v_num, c_num, l_num;
     cnf_header_read(filename, &v_num, &c_num, &l_num);
 
