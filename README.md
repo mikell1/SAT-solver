@@ -15,19 +15,16 @@ In order to use the SAT-solver, you will need to have C++ and make installed on 
 
 The `filename.cnf` should be a path to a file containing a formula in CNF. An example of such a file is:
 ```
-p cnf 5 4
-1 2 -5 0
+p cnf 4 3
+1 2 0
 -2 3 0
-1 -3 4 5 0
-2 3 0
-%
-0
+1 -3 4 0
+-2 3 0
 ```
 
 Each line in the file represents a clause, and all the lines together represents the clause set. The - in front of a variable represents a negation. 
-This file has 5 variables and 4 clauses as reflected in the header `p cnf 5 4`. The 0's at the end of each clause represents the end of the clause, and is not to be treated as a variable. 
-This formula should be interpreted as `(1 ∨ 2 ∨ ¬5) ∧ (¬2 ∨ 3) ∧ (1 ∨ ¬3 ∨ 4 ∨ 5) ∧ (2 ∨ 3)`.
-The file must end with at an empty line, a special character or a '0'. 
+This file has 4 variables and 3 clauses as reflected in the header `p cnf 4 3`. The 0's at the end of each clause represents the end of the clause, and is not to be treated as a variable. 
+This formula should be interpreted as `(1 ∨ 2) ∧ (¬2 ∨ 3) ∧ (1 ∨ ¬3 ∨ 4) ∧ (¬2 ∨ 3)`. 
 
 More examples of .cnf files can be found [here](https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html).
 
