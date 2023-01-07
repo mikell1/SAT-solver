@@ -349,9 +349,9 @@ Clause** read_cnf_file(string filename, int *n) {
     int v_num, c_num, l_num;
     cnf_header_read(filename, &v_num, &c_num, &l_num);
 
-    int *l_c_num = new int[c_num+1];
+    int *l_c_num = new int[c_num];
     int *l_val = new int[l_num];
-    bool res = cnf_data_read(filename, v_num, c_num, l_num, l_c_num, l_val);
+    cnf_data_read(filename, v_num, c_num, l_num, l_c_num, l_val);
 
     Clause **clause_set = new Clause*[c_num];
     int c_num2 = 0;

@@ -212,6 +212,7 @@ bool cnf_data_read ( string cnf_file_name, int v_num, int c_num,
   string rest;
   int v_num2;
   string word;
+  int end;
   
   error = false;
 
@@ -319,14 +320,20 @@ bool cnf_data_read ( string cnf_file_name, int v_num, int c_num,
   l_num2 = 0;
   c_num2 = 0;
   l_c_num2 = 0;
+  end = 0;
 
   while ( 1 )
   {
     getline ( input, line );
 
-    if ( input.eof ( ) )
+    if ( end )
     {
       break;
+    }
+
+    if ( input.eof ( ) )
+    {
+      end = 1;
     }
 
     if ( line[0] == 'c' || line[0] == 'C' )
@@ -582,6 +589,7 @@ bool cnf_header_read ( string cnf_file_name, int *v_num, int *c_num,
   string line;
   string rest;
   string word;
+  int end;
   
   error = false;
 
@@ -728,14 +736,20 @@ bool cnf_header_read ( string cnf_file_name, int *v_num, int *c_num,
 //  Read remaining lines, counting the literals while ignoring occurrences of '0'.
 //
   *l_num = 0;
+  end = 0;
 
   while ( 1 )
   {
     getline ( input, line );
 
-    if ( input.eof ( ) )
+    if ( end )
     {
       break;
+    }
+
+    if ( input.eof ( ) )
+    {
+      end = 1;
     }
 
     if ( line[0] == 'c' || line[0] == 'C' )
