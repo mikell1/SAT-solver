@@ -1,6 +1,0 @@
-p q -r -s
-r -s
-p r s
-p -r -s
--p -q r s
-r
