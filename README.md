@@ -1,6 +1,6 @@
 # SAT-solver
 
-Welcome to the SAT-solver! This program is a command line tool for solving the [Boolean Satisfiability Problem (SAT)](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem) in C++. Given a formula in [Conjuncture Normal Form (CNF)](https://en.wikipedia.org/wiki/Conjunctive_normal_form), the SAT-solver will determine whether or not there exists a truth assignment to the variables in the formula that makes it true.
+Welcome to the SAT-solver! This program is a command line tool for solving the [Boolean Satisfiability Problem (SAT)](https://en.wikipedia.org/wiki/Boolean_satisfiability_problem). Given a formula in [Conjuncture Normal Form (CNF)](https://en.wikipedia.org/wiki/Conjunctive_normal_form), the SAT-solver will determine whether or not there exists a truth assignment to the variables in the formula that makes it true.
 
 ### Prerequisites
 
@@ -11,18 +11,25 @@ In order to use the SAT-solver, you will need to have C++ and make installed on 
 1. Clone this repository: `git clone https://github.com/mikell1/SAT-solver.git`
 2. Enter the directory: `cd SAT-solver`
 3. Compile the program: `make`
-4. Run the program: `./SAT-solver filename.txt`
+4. Run the program: `./SAT-solver filename.cnf`
 
-The `filename.txt` should be a path to a file containing a formula in CNF. An example of such a file is:
+The `filename.cnf` should be a path to a file containing a formula in CNF. An example of such a file is:
 ```
-p q -r s
--p q r s
-p -q r s
-p q r -s
-p -q -r -s
+p cnf 5 4
+1 2 -5 0
+-2 3 0
+1 -3 4 5 0
+2 3 0
+%
+0
 ```
 
 Each line in the file represents a clause, and all the lines together represents the clause set. The - in front of a variable represents a negation. 
+This file has 5 variables and 4 clauses as reflected in the header `p cnf 5 4`. The 0's at the end of each clause represents the end of the clause, and is not to be treated as a variable. 
+This formula should be interpreted as `(1 ∨ 2 ∨ ¬5) ∧ (¬2 ∨ 3) ∧ (1 ∨ ¬3 ∨ 4 ∨ 5) ∧ (2 ∨ 3)`.
+The file must end with at an empty line, a special character or a '0'. 
+
+More examples of .cnf files can be found [here](https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html).
 
 You can also test the program with the -test flag:
 ```
@@ -34,18 +41,11 @@ This will run the SAT-solver on a full clause set with 10 variables.
 
 Here is an example of running the SAT-solver on a CNF formula:
 ```
-$ ./SAT-solver example_CNF_formula.txt
-Determining the satisfiability of the following CNF formula:
-{
-  {p, q, ~r, ~s},
-  {r, ~s},
-  {p, r, s},
-  {p, ~r, ~s},
-  {~p, ~q, r, s},
-  {r}
-}
+$ ./SAT-solver example_CNF_formula.cnf
+Determining the satisfiability of the following CNF formula: example_CNF_formula.cnf
 
 Conclusion: satisfiable
+Satisfying interpretation: 15 -19 -8 -4 13 6 -5 -7 -12 -16 -10 1 -11 -2 -9 20 -3 14 17 -18
 ```
 
 ---
