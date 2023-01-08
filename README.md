@@ -21,9 +21,11 @@ p cnf 4 3
 1 -3 4 0
 ```
 
-Each line in the file represents a clause, and all the lines together represents the clause set. The - in front of a variable represents a negation. 
-This file has 4 variables and 3 clauses as reflected in the header `p cnf 4 3`. The 0's at the end of each clause represents the end of the clause, and is not to be treated as a variable. 
+Each line in the file represents a clause of literals, and all the lines together represents the clause set. The - in front of a variable represents a negation. 
+This file has 4 variables and 3 clauses as reflected in the header `p cnf 4 3`. The 0's at the end of each clause represents the end of the clause, and is not to be treated as a literal. 
 This formula should be interpreted as `(1 ∨ 2) ∧ (¬2 ∨ 3) ∧ (1 ∨ ¬3 ∨ 4)`. 
+
+Click [here](https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html) to learn more about the DIMACS CNF file format. 
 
 More examples of .cnf files can be found [here](https://www.cs.ubc.ca/~hoos/SATLIB/benchm.html).
 
@@ -43,6 +45,3 @@ Determining the satisfiability of the following CNF formula: example_CNF_formula
 Conclusion: satisfiable
 Satisfying interpretation: 15 -19 -8 -4 13 6 -5 -7 -12 -16 -10 1 -11 -2 -9 20 -3 14 17 -18
 ```
-
----
-Note: This README file was created with the help of ChatGPT.
