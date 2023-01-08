@@ -412,7 +412,7 @@ Clause** build_full_clause_set(int num_vars) {
  * The second formula is an almost full clause set of 2^n-1 clauses (satisfiable).
 */
 void test(int num_variables) {
-    cout << "Testing sequent with " << num_variables << " variables" << endl;
+    cout << "Testing sequent with " << num_variables << " variables (" << pow(2, num_variables) << " clauses)" << endl;
 
     cout << "Unsatisfiable test: ";
     Clause** cl1 = build_full_clause_set(num_variables);
