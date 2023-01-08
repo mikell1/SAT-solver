@@ -3,38 +3,38 @@
 
 class Clause {
     public:
-        atom *formulae;
+        literal *literals;
         int n;
-        Clause(atom *formulae, int n);
-        atom can_be_simplified_with(atom);
+        Clause(literal *literals, int n);
+        int can_be_simplified_with(literal lit, literal *lit_out);
         void print();
 };
 
-Clause::Clause(atom *formulae, int n) {
-    this->formulae = formulae;
+Clause::Clause(literal *literals, int n) {
+    this->literals = literals;
     this->n = n;
 }
 
 /**
- * Determines whether the clause can be simplified with a given atom.
- * Returns true if the given atom's variable is contained in its array of formulae.
+ * Determines whether the clause can be simplified with a given literal.
+ * Returns true if the given literal's variable is contained in its array of literals.
 */
-atom Clause::can_be_simplified_with(atom at) {
+int Clause::can_be_simplified_with(literal lit, literal *lit_out) {
     for (int i = 1; i < n; i++) {
-        if (at.var_hash == this->formulae[i].var_hash) {
-            // Clause contains given atom's variable, thus can be simplified with given atom
-            atom at = {this->formulae[i].var_hash, this->formulae[i].not_negated};
-            return at;
+        if (lit.var == this->literals[i].var) {
+            // Clause contains given literal's variable, thus can be simplified with given literal
+            *lit_out = {this->literals[i].var, this->literals[i].positive};
+            return 1;
         }
     }
 
-    return {0, 0};
+    return 0;
 }
 
 void Clause::print() {
     for (int i = 0; i < n; i++) {
-        if (!formulae[i].not_negated) cout << "-";
-        cout << formulae[i].var_hash << " ";
+        if (!literals[i].positive) cout << "-";
+        cout << literals[i].var << " ";
     }
 }
 
@@ -60,20 +60,21 @@ Sequent::Sequent(Clause **clause_set, int n) {
 */
 bool Sequent::is_axiom() {
     for (int i = 0; i < n; i++) {
-        // skips if clause' length is not 1
         if (clause_set[i]->n == 0)
             // Axiom by empty clause
             return true;
-        
+        // skips if clause' length is not 1
         if (clause_set[i]->n != 1) continue;
-        atom this_at = clause_set[i]->formulae[0];
+
+        literal this_lit = clause_set[i]->literals[0];
 
         for (int j = 0; j < n; j++) {
+            if (i == j) continue;
             if (clause_set[j]->n != 1) continue;
-            atom other_at = clause_set[j]->formulae[0];
-            // Checks if first atom's variable is equal to second atom's variable,
-            // and if respective atom's negation is different.
-            if (this_at.var_hash == other_at.var_hash && this_at.not_negated != other_at.not_negated && i != j)
+            literal other_lit = clause_set[j]->literals[0];
+            // Checks if first literal's variable is equal to second literal's variable,
+            // and if respective literal's negation is different.
+            if (this_lit.var == other_lit.var && this_lit.positive != other_lit.positive)
                 // Axiom
                 return true;
         }
@@ -83,30 +84,30 @@ bool Sequent::is_axiom() {
 
 /**
  * Applies unit propagation on a sequent.
- * I.e. for all single formulae clauses in it's clause set,
- * remove all clauses containing the single formula from the clause set,
- * and remove the negated formula from any clause' formulae array where the negated
- * formula of the single formula is included.
+ * I.e. for all single literal clauses in it's clause set,
+ * remove all clauses containing the single literal from the clause set,
+ * and remove the negated literal from any clause' literals array where the negated
+ * literal of the single literal is included.
 */
 bool Sequent::propagate() {
     while (!single_clause_indexes.empty()) {
         int i = single_clause_indexes.front();
         if (i > n || clause_set[i]->n != 1) {
-            // Clause contains more than one formulae or clause index is out of bounds.
+            // Clause contains more than one literal or clause index is out of bounds.
             single_clause_indexes.pop();
             continue;
         }
         
-        atom at = clause_set[i]->formulae[0];
+        literal lit = clause_set[i]->literals[0];
         for (int j = 0; j < n; j++) {
-            atom simplify_with = clause_set[j]->can_be_simplified_with(at);
-            if (simplify_with.var_hash) {
-                if (at.not_negated != simplify_with.not_negated) {
+            literal simplify_with;
+            if (clause_set[j]->can_be_simplified_with(lit, &simplify_with)) {
+                if (lit.positive != simplify_with.positive) {
                     // Unit resolution
-                    // Remove the atom from the clause' formulae array
+                    // Remove the atom from the clause' literals array
                     for (int k = 0; k < clause_set[j]->n; k++) {
-                        if (clause_set[j]->formulae[k].var_hash == simplify_with.var_hash && clause_set[j]->formulae[k].not_negated == simplify_with.not_negated) {
-                            clause_set[j]->formulae[k] = clause_set[j]->formulae[--clause_set[j]->n];
+                        if (clause_set[j]->literals[k].var == simplify_with.var && clause_set[j]->literals[k].positive == simplify_with.positive) {
+                            clause_set[j]->literals[k] = clause_set[j]->literals[--clause_set[j]->n];
                             if (clause_set[j]->n == 1) single_clause_indexes.push(j);
                             break;
                         }
@@ -149,13 +150,13 @@ uint32_t choose_cut_var(Sequent *seq) {
 /**
  * Creates a new sequent with atomic cut applied based on chosen variable.
 */
-Sequent *atomic_cut_create_sequent(Clause **clause_set, int n, uint32_t var_hash, bool val) {
+Sequent *atomic_cut_create_sequent(Clause **clause_set, int n, uint32_t var, bool val) {
     // Creates a new sequent
-    atom at = {var_hash, val};
-    atom *formulae = new atom[1];
-    formulae[0] = at;
+    literal this_lit = {var, val};
+    literal *literals = new literal[1];
+    literals[0] = this_lit;
 
-    Clause *cl = new Clause(formulae, 1);
+    Clause *cl = new Clause(literals, 1);
     Clause **cl_set = new Clause*[n+1];
     int c_num = 0;
 
@@ -165,8 +166,8 @@ Sequent *atomic_cut_create_sequent(Clause **clause_set, int n, uint32_t var_hash
     for (int i = 0; i < n; i++) {
         bool keep = true;
         for (int j = 0; j < clause_set[i]->n; j++) {
-            atom a = clause_set[i]->formulae[j];
-            if (a.var_hash == at.var_hash && a.not_negated == at.not_negated) {
+            literal other_lit = clause_set[i]->literals[j];
+            if (other_lit.var == this_lit.var && other_lit.positive == this_lit.positive) {
                 // Unit resolution, ignores clause
                 keep = false;
                 break;
@@ -174,17 +175,17 @@ Sequent *atomic_cut_create_sequent(Clause **clause_set, int n, uint32_t var_hash
         }
         if (keep) {
             for (int j = 0; j < clause_set[i]->n; j++) {
-                atom a = clause_set[i]->formulae[j];
-                if (a.var_hash != var_hash) {
-                    if (var_count.find(a.var_hash) != var_count.end()) {
+                literal l = clause_set[i]->literals[j];
+                if (l.var != var) {
+                    if (var_count.find(l.var) != var_count.end()) {
                         // Increment count by 1
-                        var_count[a.var_hash]++;
+                        var_count[l.var]++;
                     } else {
-                        var_count[a.var_hash] = 1;
+                        var_count[l.var] = 1;
                     }
                 }
             }
-            cl_set[c_num] = deep_cp_clause(clause_set[i], at.var_hash);
+            cl_set[c_num] = deep_cp_clause(clause_set[i], this_lit.var);
             if (cl_set[c_num]->n == 1) {
                 // Save single clause index
                 single_clause_indexes.push(c_num);
@@ -209,16 +210,16 @@ Sequent *atomic_cut_create_sequent(Clause **clause_set, int n, uint32_t var_hash
  * Returns 0 if atomic cut cannot be applied.
 */
 int apply_atomic_cut(Sequent *seq, Sequent **left, Sequent **right) {
-    uint32_t var_hash = choose_cut_var(seq);
-    if (!var_hash) return 0;
+    uint32_t var = choose_cut_var(seq);
+    if (!var) return 0;
 
     Clause **clause_set = seq->clause_set;
     int n = seq->n;
 
     // Sets the left Sequent
-    *left = atomic_cut_create_sequent(clause_set, n, var_hash, true);
+    *left = atomic_cut_create_sequent(clause_set, n, var, true);
     // Sets the right Sequent
-    *right = atomic_cut_create_sequent(clause_set, n, var_hash, false);
+    *right = atomic_cut_create_sequent(clause_set, n, var, false);
 
     return 1;
 }
@@ -228,22 +229,22 @@ int apply_atomic_cut(Sequent *seq, Sequent **left, Sequent **right) {
 */
 Clause* deep_cp_clause(Clause* cl, uint32_t ignore_var) {
     int n = cl->n;
-    atom *formulae = new atom[n];
+    literal *literals = new literal[n];
     int c_i = 0;
 
     for (int i = 0; i < n; i++) {
-        if (cl->formulae[i].var_hash == ignore_var) continue; // Unit resolution
-        atom at = {cl->formulae[i].var_hash, cl->formulae[i].not_negated};
-        formulae[c_i] = at;
+        if (cl->literals[i].var == ignore_var) continue; // Unit resolution
+        literal lit = {cl->literals[i].var, cl->literals[i].positive};
+        literals[c_i] = lit;
         c_i++;
     }
 
-    Clause *clause = new Clause(formulae, c_i);
+    Clause *clause = new Clause(literals, c_i);
     return clause;
 }
 
 void free_clause(Clause *cl) {
-    delete []cl->formulae;
+    delete []cl->literals;
     delete cl;
 }
 
@@ -277,16 +278,16 @@ void prove_it(Clause** clause_set, int n) {
     Sequent *seq = new Sequent(clause_set, n);
     map<uint32_t, int> var_count;
 
-    // Find indexes of all one-formula clauses
+    // Find indexes of all one-literal clauses
     for (int i = 0; i < n; i++) {
         if (seq->clause_set[i]->n == 1) seq->single_clause_indexes.push(i);
         for (int j = 0; j < seq->clause_set[i]->n; j++) {
-            atom a = seq->clause_set[i]->formulae[j];
-            if (var_count.find(a.var_hash) != var_count.end()) {
+            literal lit = seq->clause_set[i]->literals[j];
+            if (var_count.find(lit.var) != var_count.end()) {
                 // Increment count by 1
-                var_count[a.var_hash]++;
+                var_count[lit.var]++;
             } else {
-                var_count[a.var_hash] = 1;
+                var_count[lit.var] = 1;
             }
         }
     }
@@ -317,11 +318,10 @@ void prove_it(Clause** clause_set, int n) {
         if (!res) {
             cout << "satisfiable" << endl;
             cout << "Satisfying interpretation: ";
-            //print_clause_set(seq->clause_set, seq->n);
             for (int i = 0; i < seq->n; i++) {
-                atom at = seq->clause_set[i]->formulae[0];
-                if (!at.not_negated) cout << "-";
-                cout << at.var_hash << " ";
+                literal lit = seq->clause_set[i]->literals[0];
+                if (!lit.positive) cout << "-";
+                cout << lit.var << " ";
             }
             cout << endl;
             free_sequent(seq);
@@ -349,7 +349,7 @@ Clause** read_cnf_file(string filename, int *n) {
     int v_num, c_num, l_num;
     cnf_header_read(filename, &v_num, &c_num, &l_num);
 
-    int *l_c_num = new int[c_num];
+    int *l_c_num = new int[c_num+1];
     int *l_val = new int[l_num];
     cnf_data_read(filename, v_num, c_num, l_num, l_c_num, l_val);
 
@@ -360,18 +360,18 @@ Clause** read_cnf_file(string filename, int *n) {
     while (1) {
         if (c_num2 == c_num) break;
 
-        int num_formulae = l_c_num[c_num2];
-        atom* formulae = new atom[num_formulae];
+        int num_literals = l_c_num[c_num2];
+        literal* literals = new literal[num_literals];
 
-        for (int i = 0; i < num_formulae; i++) {
+        for (int i = 0; i < num_literals; i++) {
             int var = l_val[l_num2];
-            bool not_negated = var > 0;
-            atom at = {(uint32_t) abs(var), not_negated};
-            formulae[i] = at;
+            bool positive = var > 0;
+            literal lit = {(uint32_t) abs(var), positive};
+            literals[i] = lit;
             l_num2++;
         }
 
-        Clause *cl = new Clause(formulae, num_formulae);
+        Clause *cl = new Clause(literals, num_literals);
         clause_set[c_num2] = cl;
         c_num2++;
     }
@@ -392,14 +392,14 @@ Clause** build_full_clause_set(int num_vars) {
     Clause **clause_set = new Clause*[(int)pow(2, num_vars)];
 
     for (int i = 0; i < pow(2, num_vars); i++) {
-        atom* formulae = new atom[num_vars];
+        literal* literals = new literal[num_vars];
         for (uint32_t j = 0; j < (uint32_t) num_vars; j++) {
             // Determines negation with this formula
-            bool not_negated = int(i / (pow(2, num_vars) / pow(2, j + 1))) % 2 == 0;
-            atom at = {j+1, not_negated};
-            formulae[j] = at;
+            bool positive = int(i / (pow(2, num_vars) / pow(2, j + 1))) % 2 == 0;
+            literal lit = {j+1, positive};
+            literals[j] = lit;
         }
-        Clause *cl = new Clause(formulae, num_vars);
+        Clause *cl = new Clause(literals, num_vars);
         clause_set[i] = cl;
     }
 
@@ -463,7 +463,6 @@ int main(int argc, char** argv) {
         Clause **clause_set = read_cnf_file(file_name, &n);
         
         cout << "Determining the satisfiability of the following CNF formula: " << file_name << endl;
-        //print_clause_set(clause_set, n);
         cout << endl << "Conclusion: ";
         prove_it(clause_set, n);
     }

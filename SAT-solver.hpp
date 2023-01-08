@@ -12,9 +12,9 @@
 #include <map>
 using namespace std;
 
-struct atom {
-    uint32_t var_hash;
-    bool not_negated;
+struct literal {
+    uint32_t var;
+    bool positive;
 };
 
 class Clause;
@@ -29,7 +29,7 @@ void print_clause_set(Clause** clause_set, int n);
 Clause* deep_cp_clause(Clause* cl, uint32_t ignore_var);
 
 uint32_t choose_cut_var(Sequent *seq);
-Sequent *atomic_cut_create_sequent(Clause **clause_set, int n, uint32_t var_hash, bool val);
+Sequent *atomic_cut_create_sequent(Clause **clause_set, int n, uint32_t var, bool val);
 int apply_atomic_cut(Sequent *seq, Sequent **left, Sequent **right);
 
 Clause** build_full_clause_set(int num_vars);
