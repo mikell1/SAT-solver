@@ -40,8 +40,7 @@ This will run the SAT-solver on a full clause set with 10 variables.
 Here is an example of running the SAT-solver on a CNF formula:
 ```
 $ ./SAT-solver example_CNF_formula.cnf
-Determining the satisfiability of the following CNF formula: example_CNF_formula.cnf
-
-Conclusion: satisfiable
-Satisfying interpretation: 15 -19 -8 -4 13 6 -5 -7 -12 -16 -10 1 -11 -2 -9 20 -3 14 17 -18
+c Solving example_CNF_formula.cnf
+s SATISFIABLE
+v 15 -19 -8 -4 13 6 -5 -7 -12 -16 -10 1 -11 -2 -9 20 -3 14 17 -18 0
 ```
