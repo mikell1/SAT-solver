@@ -30,7 +30,7 @@ Clause* deep_cp_clause(Clause* cl, uint32_t ignore_var);
 
 uint32_t choose_cut_var(Sequent *seq);
 Sequent *atomic_cut_create_sequent(Clause **clause_set, int n, uint32_t var, bool val);
-int apply_atomic_cut(Sequent *seq, Sequent **left, Sequent **right);
+void apply_atomic_cut(Sequent *seq, Sequent **left, Sequent **right, uint32_t var);
 
 Clause** build_full_clause_set(int num_vars);
 
@@ -38,6 +38,7 @@ Clause** read_cnf_file(string filename, int *n);
 
 void test(int num_variables);
 
-void prove_it(Clause** clause_set, int n);
+bool prove(Sequent *seq);
+void solve(Clause **clause_set, int n);
 
 #endif

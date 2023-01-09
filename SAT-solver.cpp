@@ -202,6 +202,10 @@ Sequent *atomic_cut_create_sequent(Clause **clause_set, int n, uint32_t var, boo
     return seq;
 }
 
+uint32_t atomic_cut_is_possible(Sequent *seq) {
+    return choose_cut_var(seq);
+}
+
 /**
  * Applies atomic cut to a sequent to achieve atomic cut elimination.
  * Returns a left- and right sequent each with an additional clause
@@ -209,10 +213,7 @@ Sequent *atomic_cut_create_sequent(Clause **clause_set, int n, uint32_t var, boo
  * The chosen variable is chosen strategically.
  * Returns 0 if atomic cut cannot be applied.
 */
-int apply_atomic_cut(Sequent *seq, Sequent **left, Sequent **right) {
-    uint32_t var = choose_cut_var(seq);
-    if (!var) return 0;
-
+void apply_atomic_cut(Sequent *seq, Sequent **left, Sequent **right, uint32_t var) {
     Clause **clause_set = seq->clause_set;
     int n = seq->n;
 
@@ -220,8 +221,6 @@ int apply_atomic_cut(Sequent *seq, Sequent **left, Sequent **right) {
     *left = atomic_cut_create_sequent(clause_set, n, var, true);
     // Sets the right Sequent
     *right = atomic_cut_create_sequent(clause_set, n, var, false);
-
-    return 1;
 }
 
 /**
@@ -270,11 +269,84 @@ void print_clause_set(Clause** clause_set, int n) {
     }
 }
 
+bool prove(Sequent *seq) {
+    // Simplifies the sequent as much as possible
+    while (seq->propagate());
+
+    // Abandons branch if the now-simplified sequent is an axiom
+    if (seq->is_axiom()) {
+        free_sequent(seq);
+        return 0;
+    }
+
+    uint32_t var = atomic_cut_is_possible(seq);
+
+    // Sequent is satisfiable if atomic cut is impossible and sequent is not an axiom
+    if (var == 0) {
+        cout << "s SATISFIABLE" << endl;
+        cout << "v ";
+        for (int i = 0; i < seq->n; i++) {
+            literal lit = seq->clause_set[i]->literals[0];
+            if (!lit.positive) cout << "-";
+            cout << lit.var << " ";
+        }
+        cout << "0" << endl;
+        free_sequent(seq);
+        return 1;
+    }
+
+    // Applies atomic cut, abandoning current sequent
+    Sequent *left;
+    Sequent *right;
+    apply_atomic_cut(seq, &left, &right, var);
+    free_sequent(seq);
+
+    if (prove(left) == 1) {
+        // Satisfiable
+        free_sequent(right);
+        return 0;
+    }
+
+    if (prove(right) == 1) {
+        // Satisfiable
+        return 1;
+    }
+
+    return 0;
+}
+
 /**
  * Determines the satisfiability of a clause set.
- * Prints 'satisfiable' or 'unsatisfiable' to the terminal.
+ * Writes 's SATISIFABLE' followed by solution, or 's UNSATISFIABLE' to stdout.
 */
-void prove_it(Clause** clause_set, int n) {
+void solve(Clause **clause_set, int n) {
+    Sequent *seq = new Sequent(clause_set, n);
+    map<uint32_t, int> var_count;
+
+    // Find indexes of all one-literal clauses
+    for (int i = 0; i < n; i++) {
+        if (seq->clause_set[i]->n == 1) seq->single_clause_indexes.push(i);
+        for (int j = 0; j < seq->clause_set[i]->n; j++) {
+            literal lit = seq->clause_set[i]->literals[j];
+            if (var_count.find(lit.var) != var_count.end()) {
+                // Increment count by 1
+                var_count[lit.var]++;
+            } else {
+                var_count[lit.var] = 1;
+            }
+        }
+    }
+    seq->var_count = var_count;
+
+    bool res = prove(seq);
+    if (res == 0) {
+        // Unsatisfiable
+        cout << "s UNSATISFIABLE" << endl;
+    }
+}
+
+/*
+void solve(Clause** clause_set, int n) {
     Sequent *seq = new Sequent(clause_set, n);
     map<uint32_t, int> var_count;
 
@@ -299,7 +371,7 @@ void prove_it(Clause** clause_set, int n) {
     while (stack.size() > 0) {
         seq = stack.back();
         stack.pop_back();
-
+    
         // Simplifies the sequent as much as possible
         while (seq->propagate());
 
@@ -316,14 +388,14 @@ void prove_it(Clause** clause_set, int n) {
 
         // Sequent is satisfiable if atomic cut is impossible and sequent is not an axiom
         if (!res) {
-            cout << "satisfiable" << endl;
-            cout << "Satisfying interpretation: ";
+            cout << "s SATISFIABLE" << endl;
+            cout << "v ";
             for (int i = 0; i < seq->n; i++) {
                 literal lit = seq->clause_set[i]->literals[0];
                 if (!lit.positive) cout << "-";
                 cout << lit.var << " ";
             }
-            cout << endl;
+            cout << "0" << endl;
             free_sequent(seq);
             free_remaining_sequents(&stack);
             return;
@@ -337,8 +409,9 @@ void prove_it(Clause** clause_set, int n) {
         free_sequent(seq);
     }
 
-    cout << "unsatisfiable" << endl;
+    cout << "s UNSATISFIABLE" << endl;
 }
+*/
 
 /**
  * Reads a formula in CNF from file.
@@ -406,22 +479,22 @@ Clause** build_full_clause_set(int num_vars) {
     return clause_set;
 }
 
-/**
+/** 20sek
  * Tests two formulae in CNF with n variables.
  * The first formula proven is a full clause set of 2^n clauses (unsatisfiable).
  * The second formula is an almost full clause set of 2^n-1 clauses (satisfiable).
 */
 void test(int num_variables) {
-    cout << "Testing sequent with " << num_variables << " variables (" << pow(2, num_variables) << " clauses)" << endl;
+    cout << "c Testing sequent with " << num_variables << " variables (" << pow(2, num_variables) << " clauses)" << endl;
 
-    cout << "Unsatisfiable test: ";
+    cout << "c Unsatisfiable test:" << endl;
     Clause** cl1 = build_full_clause_set(num_variables);
-    prove_it(cl1, pow(2, num_variables));
-
-    cout << "Satisfiable test: ";
+    solve(cl1, pow(2, num_variables));
+    
+    cout << "c Satisfiable test:" << endl;
     Clause** cl2 = build_full_clause_set(num_variables);
     free_clause(cl2[int(pow(2, num_variables))-1]);
-    prove_it(cl2, int(pow(2, num_variables))-1);
+    solve(cl2, int(pow(2, num_variables))-1);
 }
 
 int main(int argc, char** argv) {
@@ -461,10 +534,9 @@ int main(int argc, char** argv) {
         // prove CNF formula from file
         int n;
         Clause **clause_set = read_cnf_file(file_name, &n);
-        
-        cout << "Determining the satisfiability of the following CNF formula: " << file_name << endl;
-        cout << endl << "Conclusion: ";
-        prove_it(clause_set, n);
+
+        cout << "c Solving " << file_name << endl;
+        solve(clause_set, n);
     }
 
     return 0;
