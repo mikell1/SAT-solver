@@ -304,7 +304,7 @@ bool prove(Sequent *seq) {
     if (prove(left) == 1) {
         // Satisfiable
         free_sequent(right);
-        return 0;
+        return 1;
     }
 
     if (prove(right) == 1) {
