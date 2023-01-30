@@ -8,7 +8,7 @@ In order to use the SAT-solver, you will need to have C++ and make installed on 
 
 ### Usage
 
-1. Clone this repository: `git clone https://github.com/mikell1/SAT-solver.git`
+1. Clone this repository: `git clone https://github.com/mikkellu/SAT-solver.git`
 2. Enter the directory: `cd SAT-solver`
 3. Compile the program: `make`
 4. Run the program: `./SAT-solver filename.cnf`
